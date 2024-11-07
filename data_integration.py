@@ -276,6 +276,10 @@ for k, v in metrics_scaled[["Batch", "Bio"]].iterrows():
 
 plt.show()
 
+# Get an overall score for each method we can combine the two summary scores
+# The scIB paper suggests a weighting of 40% batch correction and 60% biological conservation
+metrics_scaled["Overall"] = 0.4 * metrics_scaled["Batch"] + 0.6 * metrics_scaled["Bio"]
+metrics_scaled.style.background_gradient(cmap="Blues")
 metrics_scaled.plot.bar(y="Overall")
 plt.show()￼
 
