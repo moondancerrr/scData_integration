@@ -60,5 +60,5 @@ The workflow calculates integration metrics (e.g., ASW, PCR) and visualizes resu
 To execute the script, simply run it in a Python environment configured with the necessary Python and R dependencies. 
 
 ```bash
-python integration_workflow.py
+python data_integration.py
 ```
