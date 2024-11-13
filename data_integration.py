@@ -8,9 +8,21 @@ import scvi
 import bbknn
 import scib
 import numpy as np
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
+import random
+import tensorflow as tf2
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
+
+np.random.seed(0)
+tf.set_random_seed(0)
+random.seed(0)
+tf2.random.set_seed(0)
+tf2.keras.utils.set_random_seed(0)
 
 # R interface
 from rpy2.robjects import pandas2ri
@@ -204,7 +216,56 @@ sc.pp.neighbors(adata_seurat)
 sc.tl.umap(adata_seurat)
 sc.pl.umap(adata_seurat, color=[label_key, batch_key], wspace=1)
 
+### Using scDREAMER ###
+adata_file_path = "heart_cell_atlas_subsampled.h5ad"
+adata.write(adata_file_path)
+
+import tensorflow as tf2
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
+
+np.random.seed(0)
+tf.set_random_seed(0)
+random.seed(0)
+tf2.random.set_seed(0)
+tf2.keras.utils.set_random_seed(0)
+from scDREAMER import scDREAMER
+run_config = tf.ConfigProto()
+
+tf.compat.v1.reset_default_graph()
+
+with tf.compat.v1.Session(config=run_config) as sess:
+    dreamer = scDREAMER(
+        sess,
+        epoch=250, #<- 25 ouputs good enough batch effect filtering
+        dataset_name=adata_file_path,  # Use file path here
+        batch=batch_key,
+        cell_type=label_key,
+        name='Human',
+        lr_ae=0.0002,
+        lr_dis=0.0007,
+        X_dim=1200
+        )
+    dreamer.train_cluster()
+
+# Load the latent matrix from the CSV file
+latent_matrix_path = "Humanlatent_matrix_250.csv"
+latent_matrix = pd.read_csv(latent_matrix_path, header=None)  # Use header=None if there's no header row
+
+# Ensure the indices match by setting the latent_matrix index to adata.obs_names
+latent_matrix.index = adata.obs_names
+
+# Now assign the latent matrix to adata.obsm
+adata_scDREAMER = adata.copy()  # Optional: create a copy if you want to keep the original adata intact
+adata_scDREAMER.obsm["X_scDREAMER"] = latent_matrix.to_numpy()  # Convert DataFrame to NumPy array
+
 # Compare all methods to evaluate the quality of integration 
+# Calculate metrics for the scDREAMER latent matrix
+metrics_scDREAMER = scib.metrics.metrics_fast(
+    adata, adata_scDREAMER, batch_key, label_key=label_key, embed="X_scDREAMER"
+)
+
 metrics_scvi = scib.metrics.metrics_fast(
     adata, adata_scvi, batch_key, label_key, embed="X_scVI"
 )
@@ -217,12 +278,12 @@ metrics_hvg = scib.metrics.metrics_fast(adata, adata_hvg, batch_key, label_key)
 
 # Concatenate metrics results
 metrics = pd.concat(
-    [metrics_scvi, metrics_scanvi, metrics_bbknn, metrics_seurat, metrics_hvg],
+    [metrics_scDREAMER, metrics_scvi, metrics_scanvi, metrics_bbknn, metrics_seurat, metrics_hvg],
     axis="columns",
 )
 # Set methods as column names
 metrics = metrics.set_axis(
-    ["scVI", "scANVI", "BBKNN", "Seurat", "Unintegrated"], axis="columns"
+    ["scDREAMER", "scVI", "scANVI", "BBKNN", "Seurat", "Unintegrated"], axis="columns"
 )
 # Select only the fast metrics
 metrics = metrics.loc[
@@ -276,10 +337,7 @@ for k, v in metrics_scaled[["Batch", "Bio"]].iterrows():
 
 plt.show()
 
-# Get an overall score for each method we can combine the two summary scores
-# The scIB paper suggests a weighting of 40% batch correction and 60% biological conservation
 metrics_scaled["Overall"] = 0.4 * metrics_scaled["Batch"] + 0.6 * metrics_scaled["Bio"]
 metrics_scaled.style.background_gradient(cmap="Blues")
 metrics_scaled.plot.bar(y="Overall")
 plt.show()￼
-
