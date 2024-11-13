@@ -2,7 +2,7 @@
 
 ## Description
 
-This workflow provides a complete data integration and analysis pipeline for single-cell RNA-seq data using a heart cell atlas dataset. The process includes normalization, batch correction, and integration using various methods (scVI, scANVI, BBKNN, and Seurat). Metrics are then calculated to benchmark and evaluate the quality of data integration across different methods.
+This workflow provides a complete data integration and analysis pipeline for single-cell RNA-seq data using a heart cell atlas dataset. The process includes normalization, batch correction, and integration using various methods (scVI, scANVI, BBKNN, Seurat, and scDREAMER). Metrics are then calculated to benchmark and evaluate the quality of data integration across different methods.
 
 ## Requirements
 
@@ -22,11 +22,13 @@ This workflow provides a complete data integration and analysis pipeline for sin
 - `matplotlib`
 - `rpy2`
 - `anndata2ri`
+- `scDREAMER`
+- `tensorflow`
 
 You can install these packages via pip:
 
 ```bash
-pip install scanpy scvi-tools bbknn scib numpy pandas matplotlib rpy2 anndata2ri
+pip install scanpy scvi-tools bbknn scib numpy pandas matplotlib rpy2 anndata2ri scDREAMER tensorflow
 ```
 
 ### R Packages:
@@ -50,6 +52,7 @@ The script begins by loading the Heart Cell Atlas dataset and performing preproc
 - scANVI Integration: Extends scVI with cell labels for semi-supervised learning.
 - BBKNN Integration: Utilizes batch-balanced k-nearest neighbors for batch effect correction.
 - Seurat Integration: Leverages Seurat's Mutual Nearest Neighbors (MNN) in R for integration.
+- scDREAMER Integration: Leverages a variational autoencoder specifically tailored to single-cell RNA-seq and ATAC-seq datasets. 
 
 3. Evaluation and Visualization
 
