@@ -220,6 +220,7 @@ sc.pl.umap(adata_seurat, color=[label_key, batch_key], wspace=1)
 adata_file_path = "heart_cell_atlas_subsampled.h5ad"
 adata.write(adata_file_path)
 
+# import libraries
 import tensorflow as tf2
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
